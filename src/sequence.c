@@ -84,11 +84,26 @@ struct sequence_t read_sequence_from_file(const char* filename)
 	fseek(file, 0, SEEK_END);
 	long file_length = ftell(file);
 	rewind(file);
+	if (file_length <= 0)
+	{
+		fprintf(stderr, "File is empty\n");
+		exit(-1);
+	}
 	if (file_length > INT_MAX)
 	{
 		fprintf(stderr, "File is too big\n");
 		exit(-1);
 	}
+	if (fgetc(file) == '>')
+	{
+		char c;
+		do
+			c = fgetc(file);
+		while (c != '\n' && c != EOF);
+	}
+	else
+		rewind(file);
+	file_length -= ftell(file);
 	char* data = allocate_sequence((int)file_length);
 	int chars_read = fread(data, sizeof(char), file_length, file);
 	if (chars_read != file_length)
