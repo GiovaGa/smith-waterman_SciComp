@@ -2,6 +2,8 @@
 
 ## Piano d'azione
 
-1. Scrivere una versione base naive funzionante
-2. Testarla e confrontarla con [https://github.com/mengyao/Complete-Striped-Smith-Waterman-Library]
-3. Parallelizzare su CPU e GPU
+[x]. Scrivere una versione base naive funzionante
+[x]. Testarla e confrontarla con [https://github.com/mengyao/Complete-Striped-Smith-Waterman-Library]
+[ ]. Parallelizzare su CPU e GPU
+[ ]. Contare i flops
+
