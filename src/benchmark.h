@@ -10,7 +10,7 @@
 struct sw_implementation
 {
 	const char* name;
-	int (*function)(int, int, const char*, const char*, int, int, int, int*);
+	int (*function)(int, int, const char*, const char*, int, int, int, int, int*);
 	long (*flops)(int, int);
 };
 
@@ -31,7 +31,7 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 	for (int i = 0; i < n_implementations; i++)
 	{
 		start_time = omp_get_wtime();
-		score = implementation[i].function(A.length, B.length, A.data, B.data, 1, 1, -1, H); // TODO: allow for different scores
+		score = implementation[i].function(A.length, B.length, A.data, B.data, 4, -3, -1, -2, H); // TODO: allow for different scores
 		elapsed_time = omp_get_wtime() - start_time;
 
 		gflops = implementation[i].flops(A.length, B.length) / (elapsed_time * 1e9);

@@ -1,3 +1,4 @@
+#include<omp.h>
 
 static inline int min_between(int a, int b) {
 	if (a <= b) return a;
@@ -9,7 +10,7 @@ static inline int max_between(int a, int b) {
 	else return b;
 }
 
-int smith_waterman(int N, int M, const char* restrict A, const char* restrict B, int score_match, int score_skip, int score_mismatch, int* restrict H) {
+int smith_waterman(int N, int M, const char* restrict A, const char* restrict B, int score_match, int score_open_gap, int score_continue_gap, int score_mismatch, int* restrict H) {
 
 	int ans = 0;
 	// int* W; // Gap weight
@@ -19,10 +20,10 @@ int smith_waterman(int N, int M, const char* restrict A, const char* restrict B,
 			const int score = score_match * (A[i] == B[j]) + score_mismatch * (A[i] != B[j]);
 			H[i * (M + 1) + j] = max_between(H[i * (M + 1) + j], H[(i - 1) * (M + 1) + j - 1] + score);
 			for (int k = 1; k < i; ++k) {
-				H[i * (M + 1) + j] = max_between(H[i * (M + 1) + j], H[(i - k) * (M + 1) + j] - score_skip * k);
+				H[i * (M + 1) + j] = max_between(H[i * (M + 1) + j], H[(i - k) * (M + 1) + j] + score_open_gap + score_continue_gap * (k-1));
 			}
 			for (int k = 1; k < j; ++k) {
-				H[i * (M + 1) + j] = max_between(H[i * (M + 1) + j], H[i * (M + 1) + j - k] - score_skip * k);
+				H[i * (M + 1) + j] = max_between(H[i * (M + 1) + j], H[i * (M + 1) + j - k] + score_open_gap + score_continue_gap * (k-1));
 			}
 			ans = max_between(ans, H[i * (M + 1) + j]);
 		}

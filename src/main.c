@@ -7,7 +7,7 @@
 #include "benchmark.h"
 #include "sequence.h"
 
-int smith_waterman(int, int, const char*, const char*, int, int, int, int*);
+int smith_waterman(int, int, const char*, const char*, int, int, int, int, int*);
 long smith_waterman_flops(int, int);
 
 
