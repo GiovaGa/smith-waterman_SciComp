@@ -7,15 +7,15 @@ SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
 
 # Target executable name
-TARGET = sw
+TARGET = sw.out
 
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -fopenmp -std=c11 -Isrc
+CFLAGS = -O2 -march=native -Wall -Wextra -fopenmp -std=c11 -Isrc
 LDFLAGS = -fopenmp
 
 # Libraries
-LIBS = 
+# LIBS = 
 
 
 # Default target
