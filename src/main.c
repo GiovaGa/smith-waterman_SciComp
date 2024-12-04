@@ -8,7 +8,10 @@
 #include "sequence.h"
 
 int smith_waterman(int, int, const char*, const char*, int, int, int, int, int*);
+int smith_waterman_parallel(int, int, const char*, const char*, int, int, int, int, int*);
+int smith_waterman_quadratic(int, int, const char*, const char*, int, int, int, int, int*);
 long smith_waterman_flops(int, int);
+long smith_waterman_flops_quadratic(int, int);
 
 
 void program_usage(const char* program_name)
@@ -124,8 +127,8 @@ int main(int argc, char* argv[])
 
 	struct sw_implementation implementations[] = {
 		{ "Smith-Waterman", smith_waterman, smith_waterman_flops },
-		{ "Smith-Waterman2", smith_waterman, smith_waterman_flops },
-		{ "Smith-Waterman3", smith_waterman, smith_waterman_flops }
+		{ "Smith-Waterman Par", smith_waterman_parallel, smith_waterman_flops },
+		{ "Smith-Waterman Quad", smith_waterman_quadratic, smith_waterman_flops_quadratic }
 	};
 
 	benchmark(implementations, sizeof(implementations) / sizeof(implementations[0]), A, B);
