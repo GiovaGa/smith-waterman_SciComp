@@ -1,25 +1,27 @@
 #include<omp.h>
+#include"benchmark.h"
+#include"sequence.h"
 
 static inline int max(const int a, int b) {
     return (a >= b)? a:b;
 }
 
-int smith_waterman(const int N, const int M, const char* restrict A, const char* restrict B, int score_match, int score_open_gap, int score_continue_gap, int score_mismatch, int* restrict H) {
 
+int smith_waterman(const struct sequence_t* A, const struct sequence_t* B, const struct scores_t*scores, int* restrict H) {
 	int ans = 0;
 	// int* W; // Gap weight
 
-	for (int i = 1; i <= N; ++i) {
-		for (int j = 1; j <= M; ++j) {
-			const int score = score_match * (A[i-1] == B[j-1]) + score_mismatch * (A[i-1] != B[j-1]);
-			H[i * (M + 1) + j] = max(H[i * (M + 1) + j], H[(i - 1) * (M + 1) + j - 1] + score);
-			for (int k = 1; k < i; ++k) {
-				H[i * (M + 1) + j] = max(H[i * (M + 1) + j], H[(i - k) * (M + 1) + j] + score_open_gap + score_continue_gap * (k-1));
+	for (size_t i = 1; i <= A->length; ++i) {
+		for (size_t j = 1; j <= B->length; ++j) {
+			const int score = scores->match * (A->data[i-1] == B->data[j-1]) + scores->mismatch * (A->data[i-1] != B->data[j-1]);
+			H[i * (A->length + 1) + j] = max(H[i * (A->length + 1) + j], H[(i - 1) * (A->length + 1) + j - 1] + score);
+			for (size_t k = 1; k < i; ++k) {
+				H[i * (A->length + 1) + j] = max(H[i * (A->length + 1) + j], H[(i - k) * (A->length + 1) + j] + scores->gap_opening + scores->gap_extension * (k-1));
 			}
-			for (int k = 1; k < j; ++k) {
-				H[i * (M + 1) + j] = max(H[i * (M + 1) + j], H[i * (M + 1) + j - k] + score_open_gap + score_continue_gap * (k-1));
+			for (size_t k = 1; k < j; ++k) {
+				H[i * (A->length + 1) + j] = max(H[i * (A->length + 1) + j], H[i * (A->length + 1) + j - k] + scores->gap_opening + scores->gap_extension * (k-1));
 			}
-			ans = max(ans, H[i * (M + 1) + j]);
+			ans = max(ans, H[i * (A->length + 1) + j]);
 		}
 	}
 	return ans;
