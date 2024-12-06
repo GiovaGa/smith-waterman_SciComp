@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 		{"Sw-Quad parallel", smith_waterman_quadratic_parallel, smith_waterman_flops_quadratic_parallel}
 	};
 
-	benchmark(implementations, sizeof(implementations) / sizeof(implementations[0]), A, B);
+	benchmark(implementations, sizeof(implementations) / sizeof(implementations[0]), A, B, &score);
 
 	deallocate_sequence(A);
 	deallocate_sequence(B);
