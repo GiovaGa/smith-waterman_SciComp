@@ -2,6 +2,7 @@
 #include<string.h>
 #include<omp.h>
 #include <stdbool.h>
+#include"benchmark.h"
 
 static inline int min(const int a, const int b) {
 	if (a < b) return a;
@@ -23,17 +24,16 @@ static inline void fill(int v, int* p, size_t n)
 #define J_BLOCK_SIZE (64/sizeof(int))
 
 
-int smith_waterman_quadratic_parallel(size_t N, size_t M, const char* restrict A, const char* restrict B, int score_match, int score_open_gap, int score_continue_gap, int score_mismatch, int* restrict H) {
-
-	//if(M < N) return smith_waterman_quadratic_opt(M, N, B, A, score_match, score_open_gap, score_continue_gap, score_mismatch, H);
+int smith_waterman_quadratic_parallel(const int N, const int M, const char* restrict A, const char* restrict B, const struct scores_t*scores, int* restrict H) {
+	//if(M < N) return smith_waterman_quadratic_opt(M, N, B, A, scores->match, scores->gap_opening, scores->gap_extension, scores->mismatch, H);
 	int ans = 0;
     int *Mj = malloc((M+1)*sizeof(int));
-	fill(score_open_gap, Mj, M+1);
+	fill(scores->gap_opening, Mj, M+1);
 	
 	for (size_t ii = 0; ii <= N; ii += I_BLOCK_SIZE)
 	{
 		int Mi[I_BLOCK_SIZE];
-		fill(score_open_gap, Mi, I_BLOCK_SIZE);
+		fill(scores->gap_opening, Mi, I_BLOCK_SIZE);
 		
 		for (size_t jj = 0; jj <= M; jj += J_BLOCK_SIZE)
 		{
@@ -45,14 +45,14 @@ int smith_waterman_quadratic_parallel(size_t N, size_t M, const char* restrict A
 					int h = H[i * (M + 1) + j];
 					int h_ne = H[(i - 1) * ( M + 1) + j - 1];
 
-					h = max(h, h_ne + score_match*(a==B[j-1]) + score_mismatch*(a!=B[j-1]));
+					h = max(h, h_ne + scores->match*(a==B[j-1]) + scores->mismatch*(a!=B[j-1]));
 					h = max(h, Mj[j]);
 					h = max(h, Mi[i - ii]);
 
 					ans = max(ans, h);
 
-					Mj[j] = max(Mj[j] + score_continue_gap, h + score_open_gap);
-					Mi[i - ii] = max(Mi[i - ii] + score_continue_gap, h + score_open_gap);
+					Mj[j] = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
+					Mi[i - ii] = max(Mi[i - ii] + scores->gap_extension, h + scores->gap_opening);
 					H[i * (M + 1) + j] = h;
 				}
 			}
