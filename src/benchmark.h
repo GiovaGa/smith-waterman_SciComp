@@ -16,7 +16,7 @@ struct sw_implementation
 
 void benchmark(struct sw_implementation* implementation, int n_implementations, struct sequence_t A, struct sequence_t B)
 {
-	int* H = (int*)calloc((A.length + 1) * (B.length + 1), sizeof(int));
+	int* H = (int*)malloc((A.length + 1) * (B.length + 1) * sizeof(int));
 	if (!H)
 	{
 		printf("Cannot allocate memory for score matrix\n");
@@ -30,6 +30,7 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 
 	for (int i = 0; i < n_implementations; i++)
 	{
+		memset(H, 0, (A.length + 1) * (B.length + 1) * sizeof(int));
 		start_time = omp_get_wtime();
 		score = implementation[i].function(A.length, B.length, A.data, B.data, 4, -3, -1, -2, H); // TODO: allow for different scores
 		elapsed_time = omp_get_wtime() - start_time;

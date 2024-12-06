@@ -11,7 +11,7 @@ TARGET = sw.out
 
 # Compiler and flags
 CC = gcc
-CFLAGS = -O2 -march=native -Wall -Wextra -fopenmp -std=c11 -Isrc
+CFLAGS = -O3 -march=native -Wall -Wextra -fopenmp -std=c11 -Isrc
 LDFLAGS = -fopenmp
 
 # Libraries
