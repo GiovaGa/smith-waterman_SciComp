@@ -12,7 +12,10 @@ int smith_waterman_parallel(int, int, const char*, const char*, int, int, int, i
 int smith_waterman_quadratic(int, int, const char*, const char*, int, int, int, int, int*);
 long smith_waterman_flops(int, int);
 long smith_waterman_flops_quadratic(int, int);
-
+int smith_waterman_quadratic_opt(int, int, const char*, const char*, int, int, int, int, int*);
+long smith_waterman_flops_quadratic_opt(int, int);
+int smith_waterman_quadratic_parallel(int, int, const char*, const char*, int, int, int, int, int*);
+long smith_waterman_flops_quadratic_parallel(int, int);
 
 void program_usage(const char* program_name)
 {
@@ -123,12 +126,14 @@ int main(int argc, char* argv[])
 	B = get_sequence(B_input);
 
 
-	printf("\n\nA (%d) =\n%s\n\nB (%d) =\n%s\n\n", A.length, A.data, B.length, B.data);
+	//printf("\n\nA (%d) =\n%s\n\nB (%d) =\n%s\n\n", A.length, A.data, B.length, B.data);
 
 	struct sw_implementation implementations[] = {
-		{ "Smith-Waterman", smith_waterman, smith_waterman_flops },
-		{ "Smith-Waterman Par", smith_waterman_parallel, smith_waterman_flops },
-		{ "Smith-Waterman Quad", smith_waterman_quadratic, smith_waterman_flops_quadratic }
+		//{ "Smith-Waterman", smith_waterman, smith_waterman_flops },
+		//{ "Smith-Waterman Par", smith_waterman_parallel, smith_waterman_flops },
+		{ "Smith-Waterman Quad", smith_waterman_quadratic, smith_waterman_flops_quadratic },
+		{"Sw-Quad optimized", smith_waterman_quadratic_opt, smith_waterman_flops_quadratic_opt},
+		{"Sw-Quad parallel", smith_waterman_quadratic_parallel, smith_waterman_flops_quadratic_parallel}
 	};
 
 	benchmark(implementations, sizeof(implementations) / sizeof(implementations[0]), A, B);

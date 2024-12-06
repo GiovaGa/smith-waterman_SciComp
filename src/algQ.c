@@ -11,8 +11,12 @@ int smith_waterman_quadratic(const int N, const int M, const char* restrict A, c
 
 	int ans = 0;
     // int* W; // Gap weight
-	int *Mi = malloc((N+1)*sizeof(int)); memset(Mi,score_open_gap,(N+1)*sizeof(int));
-    int *Mj = malloc((M+1)*sizeof(int)); memset(Mj,score_open_gap,(M+1)*sizeof(int));
+	int *Mi = malloc((N+1)*sizeof(int));
+	for(int k = 0; k < (N+1); ++k)
+		Mi[k] = score_open_gap;
+    int *Mj = malloc((M+1)*sizeof(int));
+	for(int k = 0; k < (M+1); ++k)
+		Mj[k] = score_open_gap;
 
 	for (int j = 1; j <= M; ++j) {
 	    for (int i = 1; i <= N; ++i) {
@@ -28,6 +32,9 @@ int smith_waterman_quadratic(const int N, const int M, const char* restrict A, c
             Mi[i] = max(Mi[i] + score_continue_gap, H[i * (M + 1) + j] + score_open_gap);
 		}
 	}
+	
+	free(Mi);
+	free(Mj);
 	return ans;
 }
 
