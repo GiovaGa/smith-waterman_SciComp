@@ -21,7 +21,7 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 	{
 		memset(H, 0, (A.length + 1) * (B.length + 1) * sizeof(int));
 		start_time = omp_get_wtime();
-		score = implementation[i].function(A.length, B.length, A.data, B.data, scores_param, H);
+		score = implementation[i].function(&A, &B, scores_param, H);
 		elapsed_time = omp_get_wtime() - start_time;
 
 		gflops = implementation[i].flops(A.length, B.length) / (elapsed_time * 1e9);

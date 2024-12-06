@@ -18,7 +18,7 @@ struct scores_t {
 struct sw_implementation
 {
 	const char* name;
-	int (*function)(const int, const int, const char*, const char*, const struct scores_t*, int*);
+	int (*function)(const struct sequence_t*, const struct sequence_t*, const struct scores_t*, int*);
 	long (*flops)(int, int);
 };
 

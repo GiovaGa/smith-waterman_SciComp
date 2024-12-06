@@ -1,6 +1,8 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
+#include <stddef.h>
+
 /*
 * Structure representing a sequence of characters.
 * The sequence is guaranteed to contain only uppercase A, C, G, T and be null-terminated.
@@ -9,7 +11,7 @@
 struct sequence_t
 {
 	const char* restrict data;
-	int length;
+	size_t length;
 };
 
 /*

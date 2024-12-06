@@ -7,14 +7,14 @@
 #include "benchmark.h"
 #include "sequence.h"
 
-int smith_waterman(const int N, const int M, const char* restrict A, const char* restrict B, const struct scores_t*scores, int* restrict H);
-int smith_waterman_parallel(const int N, const int M, const char* restrict A, const char* restrict B, const struct scores_t*scores, int* restrict H);
-int smith_waterman_quadratic(const int N, const int M, const char* restrict A, const char* restrict B, const struct scores_t*scores, int* restrict H);
+int smith_waterman( const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int* restrict H);
+int smith_waterman_parallel(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int* restrict H);
+int smith_waterman_quadratic(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int* restrict H);
 long smith_waterman_flops(int, int);
 long smith_waterman_flops_quadratic(int, int);
-int smith_waterman_quadratic_opt(const int N, const int M, const char* restrict A, const char* restrict B, const struct scores_t*scores, int* restrict H);
+int smith_waterman_quadratic_opt(const struct sequence_t* , const struct sequence_t*, const struct scores_t*scores, int* restrict H);
 long smith_waterman_flops_quadratic_opt(int, int);
-int smith_waterman_quadratic_parallel(const int N, const int M, const char* restrict A, const char* restrict B, const struct scores_t*scores, int* restrict H);
+int smith_waterman_quadratic_parallel(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int* restrict H);
 long smith_waterman_flops_quadratic_parallel(int, int);
 
 void program_usage(const char* program_name)
