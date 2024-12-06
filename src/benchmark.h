@@ -14,7 +14,15 @@ struct sw_implementation
 	long (*flops)(int, int);
 };
 
-void benchmark(struct sw_implementation* implementation, int n_implementations, struct sequence_t A, struct sequence_t B)
+struct scores_t {
+    int match;
+    int mismatch;
+    int gap_opening;
+    int gap_extension;
+};
+
+
+void benchmark(struct sw_implementation* implementation, int n_implementations, struct sequence_t A, struct sequence_t B, struct scores_t *scores_param)
 {
 	int* H = (int*)malloc((A.length + 1) * (B.length + 1) * sizeof(int));
 	if (!H)
@@ -32,7 +40,7 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 	{
 		memset(H, 0, (A.length + 1) * (B.length + 1) * sizeof(int));
 		start_time = omp_get_wtime();
-		score = implementation[i].function(A.length, B.length, A.data, B.data, 4, -3, -1, -2, H); // TODO: allow for different scores
+		score = implementation[i].function(A.length, B.length, A.data, B.data, scores_param->match, scores_param->mismatch, scores_param->gap_opening, scores_param->gap_extension, H); // TODO: allow for different scores
 		elapsed_time = omp_get_wtime() - start_time;
 
 		gflops = implementation[i].flops(A.length, B.length) / (elapsed_time * 1e9);
