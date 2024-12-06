@@ -23,7 +23,7 @@ int smith_waterman_quadratic_opt(const int N, const int M, const char* restrict 
 		{
 			const int score = score_match * (a == B[j-1]) + score_mismatch * (a != B[j-1]);
 			
-			const int h = max(0, H[(i - 1) * (M + 1) + j - 1] + score);
+			int h = max(0, H[(i - 1) * (M + 1) + j - 1] + score);
 			h = max(h, Mj[j]);
 			h = max(h, Mi);
 
