@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
 	A = get_sequence(A_input);
 	B = get_sequence(B_input);
 
-		struct scores_t score = {4, -2, -3, -1};
+	struct scores_t score = {4, -2, -3, -1};
     //there are still flags to be consumed
     if (argc > argc_offset) {
         if (argc < argc_offset + 8) {
@@ -174,9 +174,9 @@ int main(int argc, char* argv[])
 
 
 	//printf("\n\nA (%d) =\n%s\n\nB (%d) =\n%s\n\n", A.length, A.data, B.length, B.data);
-	printf("SCORES: -m %d, -x %d, -o %d, -e %d\n", score.match, score.mismatch, score.gap_opening, score.gap_extension);
+	printf("\nSCORES: -m %d, -x %d, -o %d, -e %d\n", score.match, score.mismatch, score.gap_opening, score.gap_extension);
 
-
+	int n_runs = 5;
 	struct sw_implementation implementations[] = {
 		//{ "Smith-Waterman", smith_waterman, smith_waterman_flops },
 		//{ "Smith-Waterman Par", smith_waterman_parallel, smith_waterman_flops },
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 		{"Sw-Quad parallel", smith_waterman_quadratic_parallel, smith_waterman_flops_quadratic_parallel}
 	};
 
-	benchmark(implementations, sizeof(implementations) / sizeof(implementations[0]), A, B, &score);
+	benchmark(implementations, sizeof(implementations) / sizeof(implementations[0]), n_runs, A, B, &score);
 
 	deallocate_sequence(A);
 	deallocate_sequence(B);

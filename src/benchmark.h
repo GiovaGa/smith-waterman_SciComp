@@ -23,7 +23,9 @@ struct sw_implementation
 };
 
 
-void benchmark(struct sw_implementation* implementation, int n_implementations, struct sequence_t A, struct sequence_t B, const struct scores_t *scores_param);
+void benchmark(struct sw_implementation* implementation, int n_implementations, int n_runs,  struct sequence_t A, struct sequence_t B, const struct scores_t *scores_param);
+double avg(double* array, int array_len);
+double std_dev(double* array, int array_len, double avg);
 
 
 #endif
