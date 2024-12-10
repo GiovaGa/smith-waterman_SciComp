@@ -8,17 +8,11 @@
 
 #include "sequence.h"
 
-struct scores_t {
-    int match;
-    int mismatch;
-    int gap_opening;
-    int gap_extension;
-};
 
 struct sw_implementation
 {
 	const char* name;
-	int (*function)(const struct sequence_t*, const struct sequence_t*, const struct scores_t*, int*);
+	int (*function)(const struct sequence_t*, const struct sequence_t*, const struct scores_t*);
 	long (*flops)(int, int);
 };
 
@@ -27,6 +21,5 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 double avg(double* array, size_t array_len);
 double std_dev(double* array, size_t array_len, double avg);
 int are_scores_equal(int* array, size_t array_len);
-
 
 #endif

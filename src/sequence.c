@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <limits.h>
+#include <stdint.h>
 #include <ctype.h>
 #include <stdbool.h>
 
@@ -13,18 +14,18 @@
 * Adds null terminator at the end.
 * Exits the program on failure.
 */
-static char* allocate_sequence(int length)
+static char* allocate_sequence(size_t length)
 {
-	if (length <= 0 || length == INT_MAX)
+	if (length <= 0 || length == SIZE_MAX)
 	{
-		fprintf(stderr, "Error: %d is not a valid sequence length\n", length);
-		exit(-1);
+		fprintf(stderr, "Error: %ld is not a valid sequence length\n", length);
+		abort();
 	}
 	char* data = (char*)malloc((length + 1) * sizeof(char));
 	if (!data)
 	{
-		fprintf(stderr, "Cannot allocate memory for sequence\n");
-		exit(-1);
+		fprintf(stderr, "Cannot allocate memory for sequence");
+		abort();
 	}
 	data[length] = '\0';
 	return data;
@@ -33,18 +34,18 @@ static char* allocate_sequence(int length)
 
 void deallocate_sequence(struct sequence_t sequence)
 {
-	free((char*)sequence.data);
+	free((void*)sequence.data);
 }
 
 /*
 * Validates the sequence and converts it to upper case.
 * Returns true if the sequence is valid, false otherwise.
 */
-static bool validate_sequence(char* data, int length)
+static bool validate_sequence(char* data, size_t length)
 {
-	for (int i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
-		char c = data[i];
+		const char c = data[i];
 		if (c == 'a' || c == 'g' || c == 'c' || c == 't')
 		{
 			data[i] = toupper(c);
@@ -57,10 +58,10 @@ static bool validate_sequence(char* data, int length)
 }
 
 
-struct sequence_t get_random_sequence(int length)
+struct sequence_t get_random_sequence(size_t length)
 {
 	char* data = allocate_sequence(length);
-	for (int i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		switch (rand() % 4)
 		{
@@ -80,20 +81,20 @@ struct sequence_t read_sequence_from_file(const char* filename)
 	if (!file)
 	{
 		perror("Cannot open file");
-		exit(-1);
+		abort();
 	}
 	fseek(file, 0, SEEK_END);
-	long file_length = ftell(file);
+	size_t file_length = ftell(file);
 	rewind(file);
 	if (file_length <= 0)
 	{
 		fprintf(stderr, "File is empty\n");
-		exit(-1);
+		abort();
 	}
 	if (file_length > INT_MAX)
 	{
 		fprintf(stderr, "File is too big\n");
-		exit(-1);
+		abort();
 	}
 	if (fgetc(file) == '>')
 	{
@@ -105,20 +106,20 @@ struct sequence_t read_sequence_from_file(const char* filename)
 	else
 		rewind(file);
 	file_length -= ftell(file);
-	char* data = allocate_sequence((int)file_length);
-	int chars_read = fread(data, sizeof(char), file_length, file);
+	char* data = allocate_sequence(file_length);
+	size_t chars_read = fread(data, sizeof(char), file_length, file);
 	if (chars_read != file_length)
 	{
 		fprintf(stderr, "Cannot read the entire file\n");
-		exit(-1);
+		abort();
 	}
 	fclose(file);
-	if (!validate_sequence(data, (int)file_length))
+	if (!validate_sequence(data, file_length))
 	{
 		fprintf(stderr, "Invalid sequence\n");
-		exit(-1);
+		abort();
 	}
-	struct sequence_t sequence = { data, (int)file_length };
+	struct sequence_t sequence = { data, file_length };
 	return sequence;
 }
 
@@ -127,7 +128,7 @@ struct sequence_t read_sequence_from_stdin(void)
 {
 	int buffer_size = 128;
 	char* data = NULL;
-	int length = 0;
+	size_t length = 0;
 	while (true)
 	{
 		// here seq.data is NULL or has length characters + 1 for the null terminator
@@ -135,14 +136,14 @@ struct sequence_t read_sequence_from_stdin(void)
 		if (!data)
 		{
 			fprintf(stderr, "Cannot allocate memory for sequence\n");
-			exit(-1);
+			abort();
 		}
 		if (!fgets(data + length, buffer_size - length, stdin))
 		{
 			fprintf(stderr, "Cannot read sequence\n");
-			exit(-1);
+			abort();
 		}
-		int chars_read = strlen(data + length);
+		size_t chars_read = strlen(data + length);
 		length += chars_read;
 		if (data[length - 1] == '\n' || feof(stdin))
 		{
@@ -155,7 +156,7 @@ struct sequence_t read_sequence_from_stdin(void)
 	if (!validate_sequence(data, length))
 	{
 		fprintf(stderr, "Invalid sequence\n");
-		exit(-1);
+		abort();
 	}
 	struct sequence_t sequence = { data, length };
 	return sequence;

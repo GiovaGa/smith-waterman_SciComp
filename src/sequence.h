@@ -3,6 +3,13 @@
 
 #include <stddef.h>
 
+struct scores_t {
+    int match;
+    int mismatch;
+    int gap_opening;
+    int gap_extension;
+};
+
 /*
 * Structure representing a sequence of characters.
 * The sequence is guaranteed to contain only uppercase A, C, G, T and be null-terminated.
@@ -24,7 +31,7 @@ void deallocate_sequence(struct sequence_t sequence);
 * Exits the program on failure.
 * The caller is responsible for deallocating the sequence.
 */
-struct sequence_t get_random_sequence(int length);
+struct sequence_t get_random_sequence(size_t length);
 
 /*
 * Reads a sequence from a file.
