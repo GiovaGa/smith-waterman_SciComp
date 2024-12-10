@@ -7,15 +7,16 @@
 #include "benchmark.h"
 #include "sequence.h"
 
-int smith_waterman( const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int* restrict H);
-int smith_waterman_parallel(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int* restrict H);
-int smith_waterman_quadratic(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int* restrict H);
-long smith_waterman_flops(int, int);
-long smith_waterman_flops_quadratic(int, int);
-int smith_waterman_quadratic_opt(const struct sequence_t* , const struct sequence_t*, const struct scores_t*scores, int* restrict H);
-long smith_waterman_flops_quadratic_opt(int, int);
-int smith_waterman_quadratic_parallel(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int* restrict H);
-long smith_waterman_flops_quadratic_parallel(int, int);
+int sw_cub_ser( const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
+size_t sw_cub_ser_flops(size_t, size_t);
+int sw_cub_par(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
+size_t sw_cub_par_flops(size_t, size_t);
+int sw_quad_ser(const struct sequence_t* , const struct sequence_t*, const struct scores_t*scores);
+size_t sw_quad_ser_flops(size_t, size_t);
+int sw_quad_par_locks(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
+size_t sw_quad_par_locks_flops(size_t, size_t);
+int sw_quad_par_atomic(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
+size_t sw_quad_par_atomic_flops(size_t, size_t);
 
 void program_usage(const char* program_name)
 {
@@ -174,15 +175,15 @@ int main(int argc, char* argv[])
 
 
 	//printf("\n\nA (%d) =\n%s\n\nB (%d) =\n%s\n\n", A.length, A.data, B.length, B.data);
-	printf("\nSCORES: -m %d, -x %d, -o %d, -e %d\n", score.match, score.mismatch, score.gap_opening, score.gap_extension);
+	printf("SCORES: -m %d, -x %d, -o %d, -e %d\n", score.match, score.mismatch, score.gap_opening, score.gap_extension);
 
 	int n_runs = 5;
 	struct sw_implementation implementations[] = {
-		//{ "Smith-Waterman", smith_waterman, smith_waterman_flops },
-		//{ "Smith-Waterman Par", smith_waterman_parallel, smith_waterman_flops },
-		{ "Smith-Waterman Quad", smith_waterman_quadratic, smith_waterman_flops_quadratic },
-		{"Sw-Quad optimized", smith_waterman_quadratic_opt, smith_waterman_flops_quadratic_opt},
-		{"Sw-Quad parallel", smith_waterman_quadratic_parallel, smith_waterman_flops_quadratic_parallel}
+		//{ "SW O(^3) serial", sw_cub_ser, sw_cub_ser_flops },
+		//{ "SW O(^3) parallel", sw_cub_par, sw_cub_par_flops },
+		{"SW O(^2) serial", sw_quad_ser, sw_quad_ser_flops},
+		{"SW O(^2) parallel (locks)", sw_quad_par_locks, sw_quad_par_locks_flops},
+		{"SW O(^2) parallel (atomic)", sw_quad_par_atomic, sw_quad_par_atomic_flops}
 	};
 
 	benchmark(implementations, sizeof(implementations) / sizeof(implementations[0]), n_runs, A, B, &score);
