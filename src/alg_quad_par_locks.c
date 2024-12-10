@@ -54,9 +54,9 @@ int sw_quad_par_locks(const struct sequence_t* A, const struct sequence_t* B, co
 	{
 		int thread_id = omp_get_thread_num();
 		int num_threads = omp_get_num_threads();
-		for (size_t ii = thread_id; ii < rows; ii += num_threads)
+		for (size_t ii = thread_id; ii < rows - 1; ii += num_threads)
 		{
-			if(ii==0) continue;
+			//if(ii==rows-1) continue;
 			for(size_t jj = 0; jj < cols; ++jj)
 			{
 				omp_init_lock(&L[ii * cols + jj]);
@@ -80,9 +80,7 @@ int sw_quad_par_locks(const struct sequence_t* A, const struct sequence_t* B, co
 					const char a = A->data[i - 1];
 					for (size_t j = jj*J_BLOCK_SIZE + (jj==0); j < (jj+1)*J_BLOCK_SIZE && j < B->length+1; ++j)
 					{
-						// TODOOOOOOO::: fix
 						int y;
-						#pragma omp atomic read
 						y = H[(i - 1) * ( B->length + 1) + j - 1];
 						
 						const int h_ne = y * (i!=1) * (j!=1);
@@ -93,22 +91,18 @@ int sw_quad_par_locks(const struct sequence_t* A, const struct sequence_t* B, co
 
 						ans = max(ans, h);
 
-						Mj[j] = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
+						int mj = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
+						Mj[j] = mj;
 						Mi[i - ii*I_BLOCK_SIZE] = max(Mi[i - ii*I_BLOCK_SIZE] + scores->gap_extension, h + scores->gap_opening);
 						H[i * (B->length + 1) + j] = h;
 					}
 				}
-				
-				
-				omp_unset_lock(&L[ii * cols + jj]);
-				if (ii > 1)
+#pragma omp flush
+				if(ii != rows - 1)
+					omp_unset_lock(&L[ii * cols + jj]);
+				if (ii != 0)
 					omp_destroy_lock(&L[(ii-1) * cols + jj]);
 			}
-		}
-		#pragma omp single
-		{
-			for (size_t jj = 0; jj < cols; ++jj)
-				omp_destroy_lock(&L[(rows-1) * cols + jj]);
 		}
 	}
 	

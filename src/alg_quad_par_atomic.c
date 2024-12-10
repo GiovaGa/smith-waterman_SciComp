@@ -44,7 +44,6 @@ int sw_quad_par_atomic(const struct sequence_t* A, const struct sequence_t* B, c
 	size_t cols = (B->length+1) / J_BLOCK_SIZE + (((B->length+1) % J_BLOCK_SIZE) != 0);
 	
 	size_t** counter_ptrs;
-
 #pragma omp parallel reduction(max:ans)
 	{
 		int num_threads = omp_get_num_threads();
@@ -67,7 +66,7 @@ int sw_quad_par_atomic(const struct sequence_t* A, const struct sequence_t* B, c
 			
 			for (size_t jj = 0; jj < cols; ++jj)
 			{
-				if (thread_id != 0)
+				if (ii != 0)
 				{
 					size_t x;
 					do
@@ -75,35 +74,34 @@ int sw_quad_par_atomic(const struct sequence_t* A, const struct sequence_t* B, c
 						#pragma omp atomic read
 						x = *prev_counter;
 					}
-					while(x <= counter); 
+					while(x <= counter - cols * (thread_id == 0)); 
 				}
-				else if (ii != 0)
-				{
-					size_t x;
-					do
-					{
-						#pragma omp atomic read
-						x = *prev_counter;
-					}
-					while(x <= counter - cols); 	
-				}
-				
 				
 				for (size_t i = ii*I_BLOCK_SIZE + (ii==0); i < (ii+1)*I_BLOCK_SIZE && i < A->length+1; ++i)
 				{
 					const char a = A->data[i - 1];
 					for (size_t j = jj*J_BLOCK_SIZE + (jj==0); j < (jj+1)*J_BLOCK_SIZE && j < B->length+1; ++j)
 					{
-						// TODOOOOOOO::: fix
-						int h_ne = H[(i - 1) * ( B->length + 1) + j - 1] * (i!=1) * (j!=1);
+						int y;
+						if (i == ii*I_BLOCK_SIZE)
+						{
+							#pragma omp atomic read
+							y = H[(i - 1) * ( B->length + 1) + j - 1];
+						}
+						else
+							y = H[(i - 1) * ( B->length + 1) + j - 1];
+						
+						int h_ne = y * (i!=1) * (j!=1);
 
 						int h = max(0, h_ne + scores->match*(a==B->data[j-1]) + scores->mismatch*(a!=B->data[j-1]));
 						h = max(h, Mj[j]);
 						h = max(h, Mi[i - ii*I_BLOCK_SIZE]);
 
 						ans = max(ans, h);
-
-						Mj[j] = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
+						
+						int mj = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
+						#pragma omp atomic write
+						Mj[j] = mj;
 						Mi[i - ii*I_BLOCK_SIZE] = max(Mi[i - ii*I_BLOCK_SIZE] + scores->gap_extension, h + scores->gap_opening);
 						H[i * (B->length + 1) + j] = h;
 					}
