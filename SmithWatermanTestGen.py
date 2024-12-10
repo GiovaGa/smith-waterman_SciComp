@@ -19,11 +19,14 @@ class Hyperparams:
 
     # BEFORE RUNNING YOU NEED TO CREATE THIS FOLDERS
     TEST_FOLDER = r"./test"
-    INPUT_FOLDER = f"{TEST_FOLDER}/input/"
-    RAW_OUTPUT_FOLDER = f"{TEST_FOLDER}/output/"
+    INPUT_FOLDER = f"{TEST_FOLDER}/input"
+    RAW_OUTPUT_FOLDER = f"{TEST_FOLDER}/output"
 
+    CWD = os.getcwd()
     SCORE_DUMP_FULL_PATH = rf"{TEST_FOLDER}/score_dump.txt"
     COMPRESSED_OUTPUT_PATH = f"./archive.tar.gz"
+
+    SOLVER = "c"
 
 
 class Globals:
@@ -45,34 +48,32 @@ def read_seq(path_to_file: str) -> str:
         return file.readlines()[1].replace("\n", "").strip()
 
 
-def write_expected_output(path_to_seqA: str, path_to_seqB: str, output_path: str) -> None:
-    seqA = read_seq(path_to_seqA)
-    seqB = read_seq(path_to_seqB)
+def biopython_solver(seqA: str, seqB: str, score_match: int, score_mismatch: int, score_gap_open: int,
+                     score_gap_ext: int) -> float:
+    alignments = pairwise2.align.localms(seqA, seqB, score_match, score_mismatch, score_gap_open, score_gap_ext)
+    return alignments[0].score
+
+
+def c_solver(full_path_to_seqA: str, full_path_to_seqB: str, c_exec_filename="./sw.out") -> int:
+    cmd = ' '.join([c_exec_filename, f'-f {full_path_to_seqA}', f'-f {full_path_to_seqB}', f'-m {Hyperparams.SCORE_MATCH} -x {Hyperparams.SCORE_MISMATCH} -o {Hyperparams.SCORE_GAP_OPEN} -e {Hyperparams.SCORE_GAP_EXT}'])
+    proc = os.popen(cmd).read().split("\n")
+    for p in proc:
+        if p.startswith("SW O(^2) serial"):
+            parsed_score = p[30:40].strip()
+            if parsed_score.isdecimal():
+                return int(parsed_score)
+            else:
+                print(f"[ERROR]: While parsing c output, non int score was found {parsed_score = }. Exiting...")
+                sys.exit(1)
+    print(f"[ERROR]: No matching line for SW square serial algorithm. Was it renamed? Exiting...")
+    sys.exit(1)
+
+
+def write_expected_output(path_to_seqA: str, path_to_seqB: str, output_path: str, solver: callable, solver_arg) -> None:
     print(f"aligning {path_to_seqA} -> {path_to_seqB}")
-    alignments = pairwise2.align.localms(seqA, seqB, Hyperparams.SCORE_MATCH, Hyperparams.SCORE_MISMATCH,
-                                         Hyperparams.SCORE_GAP_OPEN, Hyperparams.SCORE_GAP_EXT)
+    score = solver(*solver_arg)
     with open(f"{output_path}", "w") as of:
-        of.write(f"{alignments[0].score}\n")
-
-
-def _write_expected_output(path_to_seqA: str, path_to_seqB: str, output_path: str) -> None:
-    # deprecated
-    """create and write a file containing a string with the expected output
-    For now it will just be the alignment scores, each on a new line"""
-
-    proc = subprocess.Popen(f"./ssw_test -m {Hyperparams.SCORE_MATCH} -x {abs(Hyperparams.SCORE_MISMATCH)}"
-                            f" -o {abs(Hyperparams.SCORE_GAP_OPEN)} -e {abs(Hyperparams.SCORE_GAP_EXT)} {path_to_seqA}"
-                            f" {path_to_seqB}", stdout=subprocess.PIPE,
-                            shell=True)
-    (out, _) = proc.communicate()
-    out = str(out)
-    score_identifier = "_score:"
-    temp: str = out.split(score_identifier)[1].strip()
-    i = 0
-    while temp[i].isdigit():
-        i += 1
-    with open(f"{output_path}", "w") as of:
-        of.write(f"{temp[:i]}\n")
+        of.write(f"{int(score)}\n")
 
 
 def insert_at_idx(a: list, idx: int, cargo: list) -> list:
@@ -173,7 +174,7 @@ class TestCase:
 
     # TODO: refactor ALL_* to common builder
     @staticmethod
-    def ALL_perfect_match(src_seq: str):
+    def ALL_perfect_match(src_seq: str, solver: str):
         for idx, seq_len in enumerate(Hyperparams.TEST_SEQ_LEN):
             s = get_fixed_length_random_fragment(src_seq, seq_len)
 
@@ -183,11 +184,22 @@ class TestCase:
             write_seq(path_to_seqA, s, seq_len)
             write_seq(path_to_seqB, s, seq_len)
 
-            write_expected_output(path_to_seqA, path_to_seqB,
-                                  f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_PERFECT_MATCH}{idx + 1}.txt")
+            if solver == "python":
+                write_expected_output(path_to_seqA, path_to_seqB,
+                                      f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_PERFECT_MATCH}{idx + 1}.txt",
+                                      biopython_solver,
+                                      [s, s, Hyperparams.SCORE_MATCH, Hyperparams.SCORE_MISMATCH,
+                                       Hyperparams.SCORE_GAP_OPEN, Hyperparams.SCORE_GAP_EXT]
+                                      )
+            elif solver == "c":
+                write_expected_output(path_to_seqA, path_to_seqB,
+                                      f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_PERFECT_MATCH}{idx + 1}.txt",
+                                      c_solver,
+                                      [path_to_seqA, path_to_seqB]
+                                      )
 
     @staticmethod
-    def ALL_multiple_mismatch(src_seq: str):
+    def ALL_multiple_mismatch(src_seq: str, solver: str):
         """we will mismatch 30% of the original nucleotides"""
         mismatch_rate = 0.3
         for idx, seq_len in enumerate(Hyperparams.TEST_SEQ_LEN):
@@ -199,11 +211,21 @@ class TestCase:
             path_to_seqB: str = path_to_seqA.replace("seqA", "seqB")
             write_seq(path_to_seqB, seqB, seq_len)
 
-            write_expected_output(path_to_seqA, path_to_seqB,
-                                  f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_MULTIPLE_MISMATCH}{idx + 1}.txt")
+            if solver == "python":
+                write_expected_output(path_to_seqA, path_to_seqB,
+                                      f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_MULTIPLE_MISMATCH}{idx + 1}.txt",
+                                      biopython_solver, [seqA, seqB, Hyperparams.SCORE_MATCH,
+                                                         Hyperparams.SCORE_MISMATCH, Hyperparams.SCORE_GAP_OPEN,
+                                                         Hyperparams.SCORE_GAP_EXT])
+            elif solver == "c":
+                write_expected_output(path_to_seqA, path_to_seqB,
+                                      f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_MULTIPLE_MISMATCH}{idx + 1}.txt",
+                                      c_solver,
+                                      [path_to_seqA, path_to_seqB]
+                                      )
 
     @staticmethod
-    def ALL_single_gap(src_seq: str):
+    def ALL_single_gap(src_seq: str, solver: str):
         """we will open a gap with a length of 20% of the original length"""
         gap_len_factor = 0.2
         for idx, seq_len in enumerate(Hyperparams.TEST_SEQ_LEN):
@@ -215,11 +237,21 @@ class TestCase:
             seqB = insert_rr_gaps(seqA, 1, [round(seq_len * gap_len_factor)])
             write_seq(path_to_seqB, seqB, seq_len)
 
-            write_expected_output(path_to_seqA, path_to_seqB,
-                                  f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_SINGLE_GAP}{idx + 1}.txt")
+            if solver == "python":
+                write_expected_output(path_to_seqA, path_to_seqB,
+                                      f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_SINGLE_GAP}{idx + 1}.txt",
+                                      biopython_solver, [seqA, seqB, Hyperparams.SCORE_MATCH,
+                                                         Hyperparams.SCORE_MISMATCH, Hyperparams.SCORE_GAP_OPEN,
+                                                         Hyperparams.SCORE_GAP_EXT])
+            elif solver == "c":
+                write_expected_output(path_to_seqA, path_to_seqB,
+                                      f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_SINGLE_GAP}{idx + 1}.txt",
+                                      c_solver,
+                                      [path_to_seqA, path_to_seqB]
+                                      )
 
     @staticmethod
-    def ALL_multiple_gaps(src_seq: str):
+    def ALL_multiple_gaps(src_seq: str, solver: str):
         """we will open 1 gap per 50 nucleotides with a length of 50 nucleotides"""
         nof_gaps_factor = 0.02
         max_gap_len = 50
@@ -233,41 +265,52 @@ class TestCase:
             seqB = insert_rr_gaps(seqA, max_nof_gaps, [max_gap_len] * max_nof_gaps)
             write_seq(path_to_seqB, seqB, seq_len)
 
-            write_expected_output(path_to_seqA, path_to_seqB,
-                                  f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_MULTIPLE_GAPS}{idx + 1}.txt")
+            if solver == "python":
+                write_expected_output(path_to_seqA, path_to_seqB,
+                                      f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_MULTIPLE_GAPS}{idx + 1}.txt",
+                                      biopython_solver, [seqA, seqB, Hyperparams.SCORE_MATCH,
+                                                         Hyperparams.SCORE_MISMATCH, Hyperparams.SCORE_GAP_OPEN,
+                                                         Hyperparams.SCORE_GAP_EXT])
+            elif solver == "c":
+                write_expected_output(path_to_seqA, path_to_seqB,
+                                      f"{Hyperparams.RAW_OUTPUT_FOLDER}/{TestCase.TEST_ID_MULTIPLE_GAPS}{idx + 1}.txt",
+                                      c_solver,
+                                      [path_to_seqA, path_to_seqB]
+                                      )
 
 
 def generate_test_cases():
     db_seq = read_seq("./1M.fa")
     parsed_str = remove_N(db_seq)
-    TestCase.ALL_perfect_match(parsed_str)
+    TestCase.ALL_perfect_match(parsed_str, Hyperparams.SOLVER)
     print("DONE PERF MATCH")
-    TestCase.ALL_multiple_mismatch(parsed_str)
+    TestCase.ALL_multiple_mismatch(parsed_str, Hyperparams.SOLVER)
     print("DONE MULTIPLE MISMATCH")
-    TestCase.ALL_single_gap(parsed_str)
+    TestCase.ALL_single_gap(parsed_str, Hyperparams.SOLVER)
     print("DONE SINGLE GAP")
-    TestCase.ALL_multiple_gaps(parsed_str)
+    TestCase.ALL_multiple_gaps(parsed_str, Hyperparams.SOLVER)
     print("DONE MULTIPLE GAPS")
-    subprocess.Popen(f"tar -zcvf {Hyperparams.COMPRESSED_OUTPUT_PATH} {Hyperparams.TEST_FOLDER}")
+    os.system(f"tar -zcvf {Hyperparams.COMPRESSED_OUTPUT_PATH} {Hyperparams.TEST_FOLDER}")
     print("DONE COMPRESSING")
 
 
 def dump_score_params_to_file(file_full_path: str):
     with open(file_full_path, "w") as file:
-        file.write(f"-m {Hyperparams.SCORE_MATCH} -x {abs(Hyperparams.SCORE_MISMATCH)} -o {abs(Hyperparams.SCORE_GAP_OPEN)} -e {abs(Hyperparams.SCORE_GAP_EXT)}")
+        file.write(
+            f"-m {Hyperparams.SCORE_MATCH} -x {abs(Hyperparams.SCORE_MISMATCH)} -o {abs(Hyperparams.SCORE_GAP_OPEN)} -e {abs(Hyperparams.SCORE_GAP_EXT)}")
 
 
 def main():
     # TODO: maybe this folders (and all the sequence files) can be deleted after compressing
     if not os.path.isdir(Hyperparams.TEST_FOLDER):
-        print(f"[ERROR]: {Hyperparams.TEST_FOLDER} does not exist. Exiting...")
-        sys.exit(1)
+        print(f"[WARNING]: {Hyperparams.TEST_FOLDER} does not exist. Autocreating it")
+        os.system(f"mkdir {Hyperparams.TEST_FOLDER}")
     if not os.path.isdir(Hyperparams.INPUT_FOLDER):
-        print(f"[ERROR]: {Hyperparams.INPUT_FOLDER} does not exist. Exiting...")
-        sys.exit(1)
+        print(f"[WARNING]: {Hyperparams.INPUT_FOLDER} does not exist. Autocreating it")
+        os.system(f"mkdir {Hyperparams.INPUT_FOLDER}")
     if not os.path.isdir(Hyperparams.RAW_OUTPUT_FOLDER):
-        print(f"[ERROR]: {Hyperparams.RAW_OUTPUT_FOLDER} does not exist. Exiting...")
-        sys.exit(1)
+        print(f"[WARNING]: {Hyperparams.RAW_OUTPUT_FOLDER} does not exist. Autocreating it")
+        os.system(f"mkdir {Hyperparams.RAW_OUTPUT_FOLDER}")
     generate_test_cases()
     dump_score_params_to_file(Hyperparams.SCORE_DUMP_FULL_PATH)
 
