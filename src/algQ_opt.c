@@ -1,37 +1,36 @@
 #include<stdlib.h>
 #include<string.h>
 #include<omp.h>
+#include"benchmark.h"
 
 static inline int max(const int a, const int b) {
 	if (a > b) return a;
 	return b;
 }
 
-int smith_waterman_quadratic_opt(const int N, const int M, const char* restrict A, const char* restrict B, int score_match, int score_open_gap, int score_continue_gap, int score_mismatch, int* restrict H) {
+int smith_waterman_quadratic_opt (const struct sequence_t* A, const struct sequence_t* B, const struct scores_t*scores, int* restrict H){
 
-	//if(M < N) return smith_waterman_quadratic_opt(M, N, B, A, score_match, score_open_gap, score_continue_gap, score_mismatch, H);
+	//if(B->length < N) return smith_waterman_quadratic_opt(B->length, N, B, A, scores->match, scores->gap_opening, scores->gap_extension, scores->mismatch, H);
 	int ans = 0;
-    int *Mj = malloc((M+1)*sizeof(int));
-	for(int k = 0; k < (M+1); ++k)
-		Mj[k] = score_open_gap;
+    int *Mj = malloc((B->length+1)*sizeof(int));
+	for(size_t k = 0; k < (B->length+1); ++k)
+		Mj[k] = scores->gap_opening;
 
-	for (int i = 1; i <= N; ++i)
-	{
-		int Mi = score_open_gap;
-		const char a = A[i - 1];
-	    for (int j = 1; j <= M; ++j)
-		{
-			const int score = score_match * (a == B[j-1]) + score_mismatch * (a != B[j-1]);
+	for (size_t i = 1; i <= A->length; ++i) {
+		int Mi = scores->gap_opening;
+		const char a = A->data[i - 1];
+		for (size_t j = 1; j <= B->length; ++j) {
+			const int score = scores->match * (a == B->data[j-1]) + scores->mismatch * (a != B->data[j-1]);
 			
-			int h = max(0, H[(i - 1) * (M + 1) + j - 1] + score);
+			int h = max(0, H[(i - 1) * (B->length + 1) + j - 1] + score);
 			h = max(h, Mj[j]);
 			h = max(h, Mi);
 
 			ans = max(ans, h);
 
-            Mj[j] = max(Mj[j] + score_continue_gap, h + score_open_gap);
-            Mi = max(Mi + score_continue_gap, h + score_open_gap);
-			H[i * (M + 1) + j] = h;
+            Mj[j] = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
+            Mi = max(Mi + scores->gap_extension, h + scores->gap_opening);
+			H[i * (B->length + 1) + j] = h;
 		}
 	}
 	free(Mj);

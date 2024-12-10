@@ -11,11 +11,11 @@ TARGET = sw.out
 
 # Compiler and flags
 CC = gcc
-CFLAGS = -O3 -march=native -Wall -Wextra -fopenmp -std=c11 -Isrc
+CFLAGS = -O3 -march=native -Wall -Wextra -fopenmp -std=c11 -Isrc -lm
 LDFLAGS = -fopenmp
 
 # Libraries
-# LIBS = 
+LDLIBS = -lm
 
 
 # Default target
@@ -34,7 +34,7 @@ rebuild: clean all
 
 # Rule to build the target executable
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
+	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Rule to build object files
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)

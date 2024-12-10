@@ -4,42 +4,29 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sequence.h"
+
+struct scores_t {
+    int match;
+    int mismatch;
+    int gap_opening;
+    int gap_extension;
+};
 
 struct sw_implementation
 {
 	const char* name;
-	int (*function)(int, int, const char*, const char*, int, int, int, int, int*);
+	int (*function)(const struct sequence_t*, const struct sequence_t*, const struct scores_t*, int*);
 	long (*flops)(int, int);
 };
 
-void benchmark(struct sw_implementation* implementation, int n_implementations, struct sequence_t A, struct sequence_t B)
-{
-	int* H = (int*)malloc((A.length + 1) * (B.length + 1) * sizeof(int));
-	if (!H)
-	{
-		printf("Cannot allocate memory for score matrix\n");
-		return;
-	}
-	double start_time, elapsed_time, gflops;
-	int score;
 
-	printf("\n\n%-20s %-10s %-15s %-15s\n", "Function", "Score", "Elapsed Time (s)", "Performance (GFLOPS/s)");
-	printf("-------------------------------------------------------------\n");
-
-	for (int i = 0; i < n_implementations; i++)
-	{
-		memset(H, 0, (A.length + 1) * (B.length + 1) * sizeof(int));
-		start_time = omp_get_wtime();
-		score = implementation[i].function(A.length, B.length, A.data, B.data, 4, -3, -1, -2, H); // TODO: allow for different scores
-		elapsed_time = omp_get_wtime() - start_time;
-
-		gflops = implementation[i].flops(A.length, B.length) / (elapsed_time * 1e9);
-		printf("%-20s %-10d %-15f %-15f\n", implementation[i].name, score, elapsed_time, gflops);
-	}
-	free(H);
-}
+void benchmark(struct sw_implementation* implementation, int n_implementations, int n_runs,  struct sequence_t A, struct sequence_t B, const struct scores_t *scores_param);
+double avg(double* array, size_t array_len);
+double std_dev(double* array, size_t array_len, double avg);
+int are_scores_equal(int* array, size_t array_len);
 
 
 #endif
