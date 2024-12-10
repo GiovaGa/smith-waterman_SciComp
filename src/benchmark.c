@@ -27,28 +27,19 @@ int are_scores_equal(int* array, size_t array_len) {
 
 void benchmark(struct sw_implementation* implementation, int n_implementations, int n_runs, struct sequence_t A, struct sequence_t B, const struct scores_t *scores_param)
 {
-	int* H = (int*)malloc((A.length + 1) * (B.length + 1) * sizeof(int));
-	if (!H)
-	{
-		printf("Cannot allocate memory for score matrix\n");
-		return;
-	}
 	double start_time, elapsed_time, gflops;
-	int score;
+	int score = 0;
 	int* score_container = (int*)malloc((n_runs) * sizeof(int));
 	double* time_container = (double*)malloc((n_runs) * sizeof(double));
 	double* gflops_container = (double*)malloc((n_runs) * sizeof(double));
 
-	printf("%-20s %-10s %-10s %-22s %-10s %-27s %s\n", "Function", "Score", "Consistent", "AVG Elapsed Time (s)", "STD DEV", "AVG Performance (GFLOPS/s)", "STD DEV");
+	printf("%-30s %-10s %-10s %-22s %-10s %-27s %s\n", "Function", "Score", "Consistent", "AVG Elapsed Time (s)", "STD DEV", "AVG Performance (GFLOPS/s)", "STD DEV");
 	printf("-----------------------------------------------------------------------------------------------------------------\n");
 
-	for (int i = 0; i < n_implementations; i++)
-	{
+	for (int i = 0; i < n_implementations; i++) {
 		for (int j=0; j<n_runs; j++) {
-			memset(H, 0, (A.length + 1) * (B.length + 1) * sizeof(int));
-			
 			start_time = omp_get_wtime();
-			score = implementation[i].function(&A, &B, scores_param, H);
+			score = implementation[i].function(&A, &B, scores_param);
 			score_container[j] = score;
 
 			elapsed_time = omp_get_wtime() - start_time;
@@ -64,10 +55,9 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 		double gflops_avg = avg(gflops_container, n_runs);
 		double gflops_stdev = std_dev(gflops_container, n_runs, gflops_avg);
 		
-		printf("%-20s %-10d %-10s %-22f %-10f %-27f %f\n", implementation[i].name, score, is_score_same, time_avg, time_stdev, gflops_avg, gflops_stdev);
+		printf("%-30s %-10d %-10s %-22f %-10f %-27f %f\n", implementation[i].name, score, is_score_same, time_avg, time_stdev, gflops_avg, gflops_stdev);
 		
 		memset(time_container, 0, n_runs * sizeof(double));
 		memset(gflops_container, 0, n_runs * sizeof(double));
 	}
-	free(H);
 }
