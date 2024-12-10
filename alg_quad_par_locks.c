@@ -97,7 +97,9 @@ int sw_quad_par_locks(const struct sequence_t* A, const struct sequence_t* B, co
 
 						ans = max(ans, h);
 
-						Mj[j] = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
+						int mj = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
+						#pragma omp atomic write
+						Mj[j] = mj;
 						Mi[i - ii*I_BLOCK_SIZE] = max(Mi[i - ii*I_BLOCK_SIZE] + scores->gap_extension, h + scores->gap_opening);
 						H[i * (B->length + 1) + j] = h;
 					}
