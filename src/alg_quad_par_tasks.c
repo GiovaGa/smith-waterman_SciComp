@@ -10,9 +10,44 @@ static inline int max(const int a, const int b)
 	return b;
 }
 
-static const int BLOCK_SIZE = 10;  // 50  
+static const int BLOCK_SIZE = 20;  // 50  
 
-// static inline void process_block(size_t i0, size_t j0,const struct sequence_t*A,const struct sequence_t*B, const struct scores_t*scores,int* H,int* Mj, int*ans){ }
+static int recursive_solve(const size_t i0, const size_t i1, const size_t j0, const size_t j1,
+                           const struct sequence_t*A,const struct sequence_t*B, const struct scores_t*scores,int* H,int* Mj,int* Mi){
+    // printf("%lu -- %lu, %lu -- %lu",i0,i1,j0,j1); 
+    int ans = 0,ans1,ans2;
+    if((i1 > i0+BLOCK_SIZE || j1 > j0+BLOCK_SIZE)&&(i1 > i0+4 && j1 > j0+4)){
+        const size_t im = (i0+i1)/2, jm = (j0+j1)/2;
+        ans  = recursive_solve(i0, im, j0, jm, A, B, scores, H, Mj, Mi);
+    #pragma omp task shared(ans1, im, i1, j0, jm, A, B, scores, H, Mj, Mi)
+        ans1 = recursive_solve(im, i1, j0, jm, A, B, scores, H, Mj, Mi);
+    #pragma omp task shared(ans2, i0, im, jm, j1, A, B, scores, H, Mj, Mi)
+        ans2 = recursive_solve(i0, im, jm, j1, A, B, scores, H, Mj, Mi);
+    #pragma omp taskwait
+        ans  = max(max(ans,ans1),max(ans2, recursive_solve(im, i1, jm,j1, A, B, scores, H, Mj, Mi)));
+    }else{
+        if(i0 >= i1 || j0 >= j1) return 0;
+        // actually solve
+        for (size_t i = i0; i < i1; ++i)
+        {
+            const char a = A->data[i - 1];
+            for (size_t j = j0; j < j1; ++j)
+            {
+                const int score = scores->match * (a == B->data[j-1]) + scores->mismatch * (a != B->data[j-1]);
+                const int h_ne = H[(i - 1) * ( B->length + 1) + j - 1] * (i!=1) * (j!=1);
+                int h = max(0, h_ne + score);
+                h = max(h, Mj[j]); h = max(h, Mi[i]);
+
+                ans = max(ans, h);
+
+                Mj[j] = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
+                Mi[i] = max(Mi[i] + scores->gap_extension, h + scores->gap_opening);
+                H[i * (B->length + 1) + j] = h;
+            }
+        }
+    }
+    return ans;
+}
 
 
 int sw_quad_par_tasks(const struct sequence_t* A, const struct sequence_t* B, const struct scores_t*scores)
@@ -26,47 +61,19 @@ int sw_quad_par_tasks(const struct sequence_t* A, const struct sequence_t* B, co
 		abort();
 	}
 	int ans = 0;
+    int *Mi = malloc((A->length+1)*sizeof(int));
+	for(size_t k = 0; k < (A->length+1); ++k) Mi[k] = scores->gap_opening;
     int *Mj = malloc((B->length+1)*sizeof(int));
 	for(size_t k = 0; k < (B->length+1); ++k) Mj[k] = scores->gap_opening;
 
-#pragma omp parallel reduction(max:ans)
+#pragma omp parallel
     {
 #pragma omp single
         {
-	    for (size_t i0 = 1; i0 <= A->length; i0 += BLOCK_SIZE){
-            const size_t j0 = 1;
-            const size_t v0 = (i0-1)*(B->length + 1)+ j0-1,
-                         v1 = (i0)*(B->length + 1), // j0 + BLOCK_SIZE-1,
-                         v2 = (i0+BLOCK_SIZE-1)*(B->length + 1)+ j0-1,
-                         v3 = (i0+BLOCK_SIZE)*(B->length + 1); // + j0 + BLOCK_SIZE-1 // vertices of the block
-#pragma omp task shared(ans,H,Mj,A,B,scores) firstprivate(i0,j0) default(none) depend(in:H[v0:v1]) depend(out:H[v2:v3]) // depend(in:H[v0:v2])depend(out:H[v2:v3])
-        {
-            // printf("\n%i: block: %lu,%lu\n", omp_get_thread_num(),i0,j0);
-            for (size_t i = i0; i < i0+BLOCK_SIZE; ++i)
-            {
-                int Mi = scores->gap_opening;
-                const char a = A->data[i - 1];
-            for (size_t j0 = 1; j0 <= B->length; j0 += BLOCK_SIZE)
-                for (size_t j = j0; j < j0+BLOCK_SIZE; ++j)
-                {
-                    const int score = scores->match * (a == B->data[j-1]) + scores->mismatch * (a != B->data[j-1]);
-                    
-                    const int h_ne = H[(i - 1) * ( B->length + 1) + j - 1] * (i!=1) * (j!=1);
-                    int h = max(0, h_ne + score);
-                    h = max(h, Mj[j]);
-                    h = max(h, Mi);
-
-                    ans = max(ans, h);
-
-                    Mj[j] = max(Mj[j] + scores->gap_extension, h + scores->gap_opening);
-                    Mi = max(Mi + scores->gap_extension, h + scores->gap_opening);
-                    H[i * (B->length + 1) + j] = h;
-                }
-            }
-          }
+        ans = recursive_solve(1, A->length+1, 1, B->length+1, A, B, scores, H, Mj, Mi);
         }
-      }
     }
+	free(Mi);
 	free(Mj);
 	free(H);
 	return ans;
