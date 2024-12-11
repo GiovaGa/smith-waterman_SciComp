@@ -17,6 +17,7 @@ int sw_quad_par_locks(const struct sequence_t*, const struct sequence_t*, const 
 size_t sw_quad_par_locks_flops(size_t, size_t);
 int sw_quad_par_atomic(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
 size_t sw_quad_par_atomic_flops(size_t, size_t);
+int sw_quad_par_tasks(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
 
 void program_usage(const char* program_name)
 {
@@ -183,7 +184,8 @@ int main(int argc, char* argv[])
 		//{ "SW O(^3) parallel", sw_cub_par, sw_cub_par_flops },
 		{"SW O(^2) serial", sw_quad_ser, sw_quad_ser_flops},
 		{"SW O(^2) parallel (locks)", sw_quad_par_locks, sw_quad_par_locks_flops},
-		{"SW O(^2) parallel (atomic)", sw_quad_par_atomic, sw_quad_par_atomic_flops}
+		{"SW O(^2) parallel (atomic)", sw_quad_par_atomic, sw_quad_par_atomic_flops},
+        {"SW O(^2) parallel (tasks)", sw_quad_par_tasks, sw_quad_ser_flops},
 	};
 
 	benchmark(implementations, sizeof(implementations) / sizeof(implementations[0]), n_runs, A, B, &score);
