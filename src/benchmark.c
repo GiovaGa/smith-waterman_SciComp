@@ -60,4 +60,8 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 		memset(time_container, 0, n_runs * sizeof(double));
 		memset(gflops_container, 0, n_runs * sizeof(double));
 	}
+     
+	free(score_container);
+	free(time_container);
+	free(gflops_container);
 }
