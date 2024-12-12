@@ -52,4 +52,6 @@ Mkfile.old
 dkms.conf
 
 test
+data/plots
+data/raw
 .idea/

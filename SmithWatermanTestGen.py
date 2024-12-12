@@ -1,6 +1,5 @@
 import sys
 import os
-import subprocess
 import random
 from Bio import pairwise2
 
@@ -15,7 +14,7 @@ class Hyperparams:
 
     # TEST_ID_<SEQ_LEN> (=that is, the second digit of TEST_ID) will be inferred from index.
     # Update TEST_SEQ_LEN to the desired dimensions
-    TEST_SEQ_LEN = (50, 100, 500, 1_000, 5_000, 10_000)
+    TEST_SEQ_LEN = (50, 100, 500, 1_000, 5_000, 10_000, 15_000, 20_000)
 
     # BEFORE RUNNING YOU NEED TO CREATE THIS FOLDERS
     TEST_FOLDER = r"./test"
@@ -297,7 +296,7 @@ def generate_test_cases():
 def dump_score_params_to_file(file_full_path: str):
     with open(file_full_path, "w") as file:
         file.write(
-            f"-m {Hyperparams.SCORE_MATCH} -x {abs(Hyperparams.SCORE_MISMATCH)} -o {abs(Hyperparams.SCORE_GAP_OPEN)} -e {abs(Hyperparams.SCORE_GAP_EXT)}")
+            f"-m {Hyperparams.SCORE_MATCH} -x {Hyperparams.SCORE_MISMATCH} -o {Hyperparams.SCORE_GAP_OPEN} -e {Hyperparams.SCORE_GAP_EXT}")
 
 
 def main():
