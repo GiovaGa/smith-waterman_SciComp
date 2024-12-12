@@ -97,7 +97,7 @@ def parse_data_file(data_file_path: str, filename: str) -> list[PlotMetaData]:
 
         if line.startswith(Hyperparams.ALGO_NAME_LINE_IDENTIFIER):
             algo_name: str = line[:Hyperparams.ALGO_NAME_IDX_IDENTIFIER].strip()
-            algo_name = algo_name.replace("^2","$n^2$")
+            algo_name = algo_name.replace("O(^2)",r"$\mathcal{O}(n^2)$")
             pmd.algos_name.append(algo_name)
 
             # A1: assuming the current line is loaded *SW* {algo_name} {score:int} {is_consistent: str} {time:f} {tstd_d:f} {perf:f} {pstd_d:f}
@@ -133,7 +133,7 @@ def speedup_plot(data:list[PlotMetaData]):
         # print(name,alg_data)
         times,stds,nthreads = np.array(alg_data,dtype=np.float64).T
         speedup = times[0]/times
-        plt.errorbar(nthreads,speedup,xerr=stds, label=name, ecolor='black', capsize=5)
+        plt.errorbar(nthreads,speedup,yerr=stds, label=name, ecolor='black', capsize=5)
     plt.plot([1,8],[1,8],":")
     plt.xlabel("Number of threads")
     plt.ylabel("Speedup")
