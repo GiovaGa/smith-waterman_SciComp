@@ -1,16 +1,18 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from dataclasses import dataclass, field
+from tqdm import tqdm
 import os
 import sys
 
 # NOTE: Currently data{num_threads}.txt is structured as follow:
 #   *File:* {test_case_id}*_*seqA.txt
-#   SCORES: -m {m_score}, -x {x_score}, -o {o_score}, -e {e_score} 
+#   SCORES: -m {m_score}, -x {x_score}, -o {o_score}, -e {e_score}
 #   --------------------------------------------------------------
 #   Function                       *[The last blank space before Score should be at Hyperparams.ALGO_NAME_IDX_IDENTIFIER]*Score      Consistent AVG Elapsed Time (s)   STD DEV    AVG Performance (GFLOPS/s)  STD DEV
 #   *SW* {algo_name}                                                                                                      {score:int}{is_consistent: str}   {time:f}   {tstd_d:f} {perf:f}                    {pstd_d:f}
 #   *SW* ...
-#   *{score:int}* <- Here it's mandatory that the first char is a number-like. No other lines can have a first char that is a number-like 
+#   *{score:int}* <- Here it's mandatory that the first char is a number-like. No other lines can have a first char that is a number-like
 # IT IS MANDATORY THAT CHARS INSIDE ** ARE PERFECTLY MATCHED.
 
 class Hyperparams:
@@ -26,7 +28,7 @@ class PlotMetaData:
     test_case: int = 0
     title: str = ""
     plot_dst_dir: str = ""
-    
+
     algos_name: list[str] = field(default_factory=list)
     algos_time: list[float] = field(default_factory=list)
     algos_time_sd: list[float] = field(default_factory=list)
@@ -54,19 +56,19 @@ def check_pmd(pmd: PlotMetaData, data_file_path: str):
     if pmd.test_case == 0:
         print(f"[ERROR]: Failed to set test_case (currently is {pmd.test_case = }) while parsing {data_file_path}. Exiting...")
         sys.exit(1)
-    if len(pmd.algos_name) == 0: 
+    if len(pmd.algos_name) == 0:
         print(f"[ERROR]: The array pmd.algos_name was not set properly {pmd.algos_name = }. Exiting")
         sys.exit(1)
-    if len(pmd.algos_time) == 0: 
+    if len(pmd.algos_time) == 0:
         print(f"[ERROR]: The array pmd.algos_time was not set properly {pmd.algos_time = }. Exiting")
         sys.exit(1)
-    if len(pmd.algos_time_sd) == 0: 
+    if len(pmd.algos_time_sd) == 0:
         print(f"[ERROR]: The array pmd.algos_time_sd was not set properly {pmd.algos_time_sd = }. Exiting")
         sys.exit(1)
-    if len(pmd.algos_perf) == 0: 
+    if len(pmd.algos_perf) == 0:
         print(f"[ERROR]: The array pmd.algos_perf was not set properly {pmd.algos_perf = }. Exiting")
         sys.exit(1)
-    if len(pmd.algos_perf_sd) == 0: 
+    if len(pmd.algos_perf_sd) == 0:
         print(f"[ERROR]: The array pmd.algos_perf_sd was not set properly {pmd.algos_perf_sd = }. Exiting")
         sys.exit(1)
 
@@ -82,7 +84,7 @@ def parse_data_file(data_file_path: str, filename: str) -> list[PlotMetaData]:
     pmd = PlotMetaData()
     with open(data_file_path, "r") as df:
         lines_container = df.readlines()
-        
+
     test_case = 0
     for line in lines_container:
         if line.startswith(Hyperparams.TEST_CASES_LINE_IDENTIFIER):
@@ -92,9 +94,10 @@ def parse_data_file(data_file_path: str, filename: str) -> list[PlotMetaData]:
                 sys.exit(1)
             else:
                 pmd.test_case = test_case
-            
+
         if line.startswith(Hyperparams.ALGO_NAME_LINE_IDENTIFIER):
             algo_name: str = line[:Hyperparams.ALGO_NAME_IDX_IDENTIFIER].strip()
+            algo_name = algo_name.replace("^2","$n^2$")
             pmd.algos_name.append(algo_name)
 
             # A1: assuming the current line is loaded *SW* {algo_name} {score:int} {is_consistent: str} {time:f} {tstd_d:f} {perf:f} {pstd_d:f}
@@ -113,8 +116,36 @@ def parse_data_file(data_file_path: str, filename: str) -> list[PlotMetaData]:
             pmd_container.append(pmd)
             check_pmd(pmd, data_file_path)
             del pmd
-            pmd = PlotMetaData()      
-    return pmd_container      
+            pmd = PlotMetaData()
+    return pmd_container
+
+def speedup_plot(data:list[PlotMetaData]):
+    data.sort(key=lambda pmd:pmd.num_threads)
+    algs_data = {name : [] for name in data[0].algos_name}
+
+    for pmd in data:
+        for name,time,std in zip(pmd.algos_name,pmd.algos_time,pmd.algos_time_sd):
+            algs_data[name].append((time,std,pmd.num_threads))
+
+    plt.figure(figsize=(8, 6))
+
+    for name,alg_data in algs_data.items():
+        # print(name,alg_data)
+        times,stds,nthreads = np.array(alg_data,dtype=np.float64).T
+        speedup = times[0]/times
+        plt.errorbar(nthreads,speedup,xerr=stds, label=name, ecolor='black', capsize=5)
+    plt.plot([1,8],[1,8],":")
+    plt.xlabel("Number of threads")
+    plt.ylabel("Speedup")
+
+    plt.title(f"Speedup plot for case {data[0].test_case}")
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+
+    plt.tight_layout()
+    plt.savefig(f"plots/speedup/speedup_{data[0].test_case}.png")
+    plt.close()
+
 
 def main():
 
@@ -128,13 +159,23 @@ def main():
         print(f"[WARNING]: {Hyperparams.PLOTS_DIR} does not exist. Autocreating it")
         os.system(f"mkdir {Hyperparams.PLOTS_DIR}")
 
-    
-    for filename in os.listdir(Hyperparams.DATA_FILES_PATH):
+
+    speedup_data = {}
+    for filename in tqdm(os.listdir(Hyperparams.DATA_FILES_PATH)):
         os.system(f"mkdir ./plots/{filename.replace('.txt', '')}")
         PMD_container = parse_data_file(f"{Hyperparams.DATA_FILES_PATH}", filename)
         for pmd in PMD_container:
+            key = (pmd.title)
+            if key not in speedup_data.keys(): speedup_data[key] = []
+            speedup_data[key].append(pmd)
+        for pmd in PMD_container:
             plot_data(pmd.algos_name, pmd.algos_time, pmd.algos_time_sd, f"Time | {pmd.title}", "Time [s]", pmd.plot_dst_dir)
             plot_data(pmd.algos_name, pmd.algos_perf, pmd.algos_perf_sd, f"Performance | {pmd.title}", "GFLOPS", pmd.plot_dst_dir)
+
+    os.system(f"mkdir ./plots/speedup")
+    for list_pmd in speedup_data.values():
+        speedup_plot(list_pmd)
+
 
 if __name__ == "__main__":
     main()
