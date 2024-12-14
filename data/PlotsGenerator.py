@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dataclasses import dataclass, field
 from tqdm import tqdm
-import os
-import sys
+import os, sys
+from pathlib import Path
 
 # NOTE: Currently data{num_threads}.txt is structured as follow:
 #   *File:* {test_case_id}*_*seqA.txt
@@ -46,7 +46,7 @@ def plot_data(alogs_name: list[str], data_array: list[float], std_dev: list[floa
     plt.grid(True, linestyle='--', alpha=0.6)
 
     plt.tight_layout()
-    plt.savefig(f"{plot_dst_dir}/{plot_title}.png")
+    plt.savefig(f"{plot_dst_dir}/{plot_title}.png", dpi=400)
     plt.close()
 
 def check_pmd(pmd: PlotMetaData, data_file_path: str):
@@ -143,7 +143,7 @@ def speedup_plot(data:list[PlotMetaData]):
     plt.grid(True, linestyle='--', alpha=0.6)
 
     plt.tight_layout()
-    plt.savefig(f"plots/speedup/speedup_{data[0].test_case}.png")
+    plt.savefig(f"plots/speedup/speedup_{data[0].test_case}.png", dpi=400)
     plt.close()
 
 
@@ -151,18 +151,19 @@ def main():
 
     if not os.path.isdir(Hyperparams.DATA_FILES_PATH):
         print(f"[WARNING]: {Hyperparams.DATA_FILES_PATH} does not exist. Autocreating it")
-        os.system(f"mkdir {Hyperparams.DATA_FILES_PATH}")
+        os.mkdir(f"{Hyperparams.DATA_FILES_PATH}")
     if len(os.listdir(Hyperparams.DATA_FILES_PATH)) == 0:
         print(f"[ERROR]: No data files were found in {Hyperparams.DATA_FILES_PATH}. Edit data.sh to output to the same path as {Hyperparams.DATA_FILES_PATH} and run it. Exiting...")
         sys.exit(1)
     if not os.path.isdir(Hyperparams.PLOTS_DIR):
         print(f"[WARNING]: {Hyperparams.PLOTS_DIR} does not exist. Autocreating it")
-        os.system(f"mkdir {Hyperparams.PLOTS_DIR}")
+        os.mkdir(f"{Hyperparams.PLOTS_DIR}")
 
 
     speedup_data = {}
     for filename in tqdm(os.listdir(Hyperparams.DATA_FILES_PATH)):
-        os.system(f"mkdir ./plots/{filename.replace('.txt', '')}")
+        filepath = Path(f"./plots/{filename.replace('.txt', '')}")
+        if not filepath.exists(): filepath.mkdir()
         PMD_container = parse_data_file(f"{Hyperparams.DATA_FILES_PATH}", filename)
         for pmd in PMD_container:
             key = (pmd.title)
@@ -172,7 +173,8 @@ def main():
             plot_data(pmd.algos_name, pmd.algos_time, pmd.algos_time_sd, f"Time | {pmd.title}", "Time [s]", pmd.plot_dst_dir)
             plot_data(pmd.algos_name, pmd.algos_perf, pmd.algos_perf_sd, f"Performance | {pmd.title}", "GFLOPS", pmd.plot_dst_dir)
 
-    os.system(f"mkdir ./plots/speedup")
+    speeduppath = Path(f"./plots/speedup")
+    if not speeduppath.exists(): speeduppat.mkdir()
     for list_pmd in speedup_data.values():
         speedup_plot(list_pmd)
 
