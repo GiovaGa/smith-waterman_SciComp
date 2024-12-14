@@ -35,14 +35,6 @@
     \end{frame}
 
 
-\begin{comment}
-    \begin{frame}{The challenge}
-
-        We need to use all resources the hardware gives us
-        
-    \end{frame}
-\end{comment}
-    
 
 
 
@@ -83,8 +75,8 @@
 
      \begin{frame}{Algorithm data dependencies}
 
-
-        Recall the dependence of $H(i, j)$ from:
+        \begin{minipage}{0.49\linewidth}
+            Highlight the dependence of $H(i, j)$ from:
         \begin{itemize}
             \item the previous element along the diagonal $H(i-1, j-1)$,
             \item the previous element along the column $H(i, j-1)$,
@@ -94,5 +86,15 @@
         \vspace{10pt}
 
         Furthermore, sequences can be insanely huge!
+        \end{minipage}
+        \begin{minipage}{0.49\linewidth}
+            \begin{figure}
+            \centering
+            \includegraphics[width=1\linewidth]{algorithm_image.png}
+        \end{figure}
+        \end{minipage}
+        
+
+        
 
     \end{frame}

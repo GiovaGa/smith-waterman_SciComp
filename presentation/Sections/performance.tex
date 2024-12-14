@@ -4,24 +4,47 @@
 
     \begin{frame}{Test setup}
 
-        Dataset generation and characteristics
+        We generated test data starting from the genome of an organism found online. We then copied it and modified it.
+        We then compared the original and the modified versions. 
 
-        Hardware specification
+        Hardware characteristics:
+        \begin{itemize}
+        \item CPU: Intel i7-1165G7 (8) @ 2.8GHz
+        \item RAM: 8 GB
+        \item OS: Arch Linux (I use arch btw)
+        \end{itemize}
+        
         
     \end{frame}
 
 
     \begin{frame}{Performances}
-
-        Execution times, plots
-
-        
+        \begin{figure}[htbp]
+            \begin{subfigure}{0.49\linewidth}
+            \includegraphics[width=0.95\linewidth]{Sections/plots/Time | CASE: 49.png}
+            \end{subfigure}
+            \begin{subfigure}{0.49\textwidth}
+            \includegraphics[width=0.95\linewidth]{Sections/plots/speedup_48.png}
+            \end{subfigure}
+            \caption{Running times and speedup plots for each of the algorithms.}
+        \end{figure}
         
     \end{frame}
 
 
     \begin{frame}{Insights}
-
-        Why these results? Where are the bottlenecks?
+        \begin{table}
+        \centering
+        \begin{tabular}{c|cccc}
+            \textbf{Algorithm} & \textbf{1 thread} & \textbf{2 threads}& \textbf{4 threads}& \textbf{8 threads} \\
+            \hline
+            \textit{Serial} & \\
+            \textit{Locks} & \\
+            \textit{Tasks} & \\
+        \end{tabular}
+        \caption{Average running times for a sample input of size X and Y, for different numbers of maximum number of threads.}
+        \end{table}
+        
+        It is interesting to see approximately the same results for each of the approaches. The only notable difference is that the one using locks has a larger variation of the duration between runs.      
         
     \end{frame}
