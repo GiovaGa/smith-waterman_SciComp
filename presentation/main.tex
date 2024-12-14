@@ -1,0 +1,56 @@
+\documentclass{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+
+% Use Unipd as theme, with options:
+% - pageofpages: define the separation symbol of the footer page of pages (e.g.: of, di, /, default: of)
+% - logo: position another logo near the Unipd logo in the title page (e.g. department logo), passing the second logo path as option 
+% Use the environment lastframe to add the endframe text
+\usetheme[pageofpages=of]{Unipd}
+
+\title{The Smith-Waterman algorithm}
+\subtitle{a multithreaded implementation}
+\author[Cimino, Gaio, Paolin]{Fabio~Cimino \and Giovanni~Gaio \and Lorenzo~Paolin}
+
+\date{December 16, 2024}
+
+% The next block of commands puts the table of contents at the beginning of each section and highlights the current section
+\AtBeginSection[]
+{
+  \begin{frame}
+    \frametitle{Table of Contents}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+
+
+\begin{document}
+
+% Make the title page
+\frame{\titlepage}
+
+% Insert the general toc
+\begin{frame}{Table of Contents}
+    \tableofcontents    
+\end{frame}
+
+
+\include{Sections/introduction}
+
+\include{Sections/implementation}
+
+\include{Sections/performance}
+
+\include{Sections/conclusions}
+
+    \appendix
+
+    \begin{frame}{Backup slide}
+        Some additional content
+    \end{frame}
+    
+\end{document}
