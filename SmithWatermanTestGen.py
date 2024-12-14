@@ -14,7 +14,7 @@ class Hyperparams:
 
     # TEST_ID_<SEQ_LEN> (=that is, the second digit of TEST_ID) will be inferred from index.
     # Update TEST_SEQ_LEN to the desired dimensions
-    TEST_SEQ_LEN = (50, 100, 500, 1_000, 5_000, 10_000, 15_000, 20_000)
+    TEST_SEQ_LEN = (100, 500, 1_000, 5_000, 10_000, 15_000, 20_000, 30_000)
 
     # BEFORE RUNNING YOU NEED TO CREATE THIS FOLDERS
     TEST_FOLDER = r"./test"
@@ -25,7 +25,7 @@ class Hyperparams:
     SCORE_DUMP_FULL_PATH = rf"{TEST_FOLDER}/score_dump.txt"
     COMPRESSED_OUTPUT_PATH = f"./archive.tar.gz"
 
-    SOLVER = "c"
+    SOLVER = None
 
 
 class Globals:
@@ -196,6 +196,7 @@ class TestCase:
                                       c_solver,
                                       [path_to_seqA, path_to_seqB]
                                       )
+            elif solver == None: pass
 
     @staticmethod
     def ALL_multiple_mismatch(src_seq: str, solver: str):
@@ -222,6 +223,7 @@ class TestCase:
                                       c_solver,
                                       [path_to_seqA, path_to_seqB]
                                       )
+            elif solver == None: pass
 
     @staticmethod
     def ALL_single_gap(src_seq: str, solver: str):
@@ -248,6 +250,7 @@ class TestCase:
                                       c_solver,
                                       [path_to_seqA, path_to_seqB]
                                       )
+            elif solver == None: pass
 
     @staticmethod
     def ALL_multiple_gaps(src_seq: str, solver: str):
@@ -276,6 +279,7 @@ class TestCase:
                                       c_solver,
                                       [path_to_seqA, path_to_seqB]
                                       )
+            elif solver == None: pass
 
 
 def generate_test_cases():
