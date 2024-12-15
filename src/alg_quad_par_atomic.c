@@ -23,18 +23,17 @@ static inline void fill(int v, int* p, size_t n)
 		p[k] = v;
 }
 
-#define I_BLOCK_SIZE 8
-#define J_BLOCK_SIZE (64/sizeof(int))
+#define I_BLOCK_SIZE 200
+#define J_BLOCK_SIZE 200
 
 
-int sw_quad_par_atomic(const struct sequence_t* A, const struct sequence_t* B, const struct scores_t*scores) {
+int sw_quad_par_atomic(const struct sequence_t* A, const struct sequence_t* B, const struct scores_t*scores, int* restrict H) {
 	//if(B->length < A->length) return smith_waterman_quadratic_opt(B->length, N, B, A, scores->match, scores->gap_opening, scores->gap_extension, scores->mismatch, H);
-	int* H = (int*)malloc((A->length + 1) * (B->length + 1) * sizeof(int));
-	if (!H)
-	{
-		fprintf(stderr, "Cannot allocate memory for score matrix\n");
-		abort();
-	}
+	// int* H = (int*)malloc((A->length + 1) * (B->length + 1) * sizeof(int));
+	// if (!H) {
+		// fprintf(stderr, "Cannot allocate memory for score matrix\n");
+		// abort();
+	// }
 	
 	int ans = 0;
     int *Mj = malloc((B->length+1)*sizeof(int));
@@ -113,7 +112,6 @@ int sw_quad_par_atomic(const struct sequence_t* A, const struct sequence_t* B, c
 	
 	free(Mj);
 	free(counter_ptrs);
-	free(H);
 	return ans;
 }
 

@@ -7,17 +7,17 @@
 #include "benchmark.h"
 #include "sequence.h"
 
-int sw_cub_ser( const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
+int sw_cub_ser( const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int*);
 size_t sw_cub_ser_flops(size_t, size_t);
-int sw_cub_par(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
+int sw_cub_par(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int*);
 size_t sw_cub_par_flops(size_t, size_t);
-int sw_quad_ser(const struct sequence_t* , const struct sequence_t*, const struct scores_t*scores);
+int sw_quad_ser(const struct sequence_t* , const struct sequence_t*, const struct scores_t*scores, int*);
 size_t sw_quad_ser_flops(size_t, size_t);
-int sw_quad_par_locks(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
+int sw_quad_par_locks(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int*);
 size_t sw_quad_par_locks_flops(size_t, size_t);
-int sw_quad_par_atomic(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
+int sw_quad_par_atomic(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int*);
 size_t sw_quad_par_atomic_flops(size_t, size_t);
-int sw_quad_par_tasks(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores);
+int sw_quad_par_tasks(const struct sequence_t*, const struct sequence_t*, const struct scores_t*scores, int*);
 
 void program_usage(const char* program_name)
 {
@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
 	//printf("\n\nA (%d) =\n%s\n\nB (%d) =\n%s\n\n", A.length, A.data, B.length, B.data);
 	printf("SCORES: -m %d, -x %d, -o %d, -e %d\n", score.match, score.mismatch, score.gap_opening, score.gap_extension);
 
-	int n_runs = 5;
+	const int n_runs = 10;
 	struct sw_implementation implementations[] = {
 		//{ "SW O(^3) serial", sw_cub_ser, sw_cub_ser_flops },
 		//{ "SW O(^3) parallel", sw_cub_par, sw_cub_par_flops },

@@ -32,6 +32,7 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 	int* score_container = (int*)malloc((n_runs) * sizeof(int));
 	double* time_container = (double*)malloc((n_runs) * sizeof(double));
 	double* gflops_container = (double*)malloc((n_runs) * sizeof(double));
+    int* H =  (int*)malloc((A.length+1) * (B.length+1) * sizeof(int));
 
 	printf("%-30s %-10s %-10s %-22s %-10s %-27s %s\n", "Function", "Score", "Consistent", "AVG Elapsed Time (s)", "STD DEV", "AVG Performance (GFLOPS/s)", "STD DEV");
 	printf("-----------------------------------------------------------------------------------------------------------------\n");
@@ -39,7 +40,7 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 	for (int i = 0; i < n_implementations; i++) {
 		for (int j=0; j<n_runs; j++) {
 			start_time = omp_get_wtime();
-			score = implementation[i].function(&A, &B, scores_param);
+			score = implementation[i].function(&A, &B, scores_param, H);
 			score_container[j] = score;
 
 			elapsed_time = omp_get_wtime() - start_time;
@@ -64,4 +65,5 @@ void benchmark(struct sw_implementation* implementation, int n_implementations, 
 	free(score_container);
 	free(time_container);
 	free(gflops_container);
+    free(H);
 }

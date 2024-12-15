@@ -11,9 +11,9 @@ static inline int max(const int a, const int b)
 	return b;
 }
 
-int sw_cub_par(const struct sequence_t* A, const struct sequence_t* B, const struct scores_t*scores)
+int sw_cub_par(const struct sequence_t* A, const struct sequence_t* B, const struct scores_t*scores, int* restrict H)
 {
-	int* H = (int*)malloc((A->length + 1) * (B->length + 1) * sizeof(int));
+	// int* H = (int*)malloc((A->length + 1) * (B->length + 1) * sizeof(int));
 	if (!H)
 	{
 		fprintf(stderr, "Cannot allocate memory for score matrix\n");
@@ -42,7 +42,6 @@ int sw_cub_par(const struct sequence_t* A, const struct sequence_t* B, const str
 			H[i * (A->length + 1) + j] = h;
 		}
 	}
-	free(H);
 	return ans;
 }
 

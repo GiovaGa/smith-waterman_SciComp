@@ -12,7 +12,7 @@
 struct sw_implementation
 {
 	const char* name;
-	int (*function)(const struct sequence_t*, const struct sequence_t*, const struct scores_t*);
+	int (*function)(const struct sequence_t*, const struct sequence_t*, const struct scores_t*, int* restrict);
 	size_t (*flops)(size_t, size_t);
 };
 

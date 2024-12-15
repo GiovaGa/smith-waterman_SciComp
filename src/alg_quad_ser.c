@@ -11,16 +11,10 @@ static inline int max(const int a, const int b)
 	return b;
 }
 
-int sw_quad_ser(const struct sequence_t* A, const struct sequence_t* B, const struct scores_t*scores)
+int sw_quad_ser(const struct sequence_t* A, const struct sequence_t* B, const struct scores_t*scores, int* restrict H)
 {
 	//if(B->length < N) return smith_waterman_quadratic_opt(B->length, N, B, A, scores->match, scores->gap_opening, scores->gap_extension, scores->mismatch, H);
 	
-	int* H = (int*)malloc((A->length + 1) * (B->length + 1) * sizeof(int));
-	if (!H)
-	{
-		fprintf(stderr, "Cannot allocate memory for score matrix\n");
-		abort();
-	}
 	int ans = 0;
     int *Mj = malloc((B->length+1)*sizeof(int));
 	for(size_t k = 0; k < (B->length+1); ++k)
@@ -47,7 +41,6 @@ int sw_quad_ser(const struct sequence_t* A, const struct sequence_t* B, const st
 		}
 	}
 	free(Mj);
-	free(H);
 	return ans;
 }
 
