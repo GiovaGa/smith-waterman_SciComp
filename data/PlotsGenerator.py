@@ -37,10 +37,11 @@ class PlotMetaData:
 
 
 def plot_data(alogs_name: list[str], data_array: list[float], std_dev: list[float], plot_title: str, xlabel: str, plot_dst_dir: str):
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 6))
     plt.barh(alogs_name, data_array, height=0.9, align='center', color='skyblue', edgecolor='black')
     plt.errorbar(data_array, alogs_name, xerr=std_dev, fmt='none', ecolor='black', capsize=5)
 
+    plt.yticks(rotation=45)
     plt.xlabel(xlabel)
     plt.title(plot_title)
     plt.grid(True, linestyle='--', alpha=0.6)
@@ -127,9 +128,10 @@ def speedup_plot(data:list[PlotMetaData]):
         for name,time,std in zip(pmd.algos_name,pmd.algos_time,pmd.algos_time_sd):
             algs_data[name].append((time,std,pmd.num_threads))
 
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 6))
 
     for name,alg_data in algs_data.items():
+        if "serial" in name.lower(): continue
         # print(name,alg_data)
         times,stds,nthreads = np.array(alg_data,dtype=np.float64).T
         speedup = times[0]/times
@@ -174,7 +176,7 @@ def main():
             plot_data(pmd.algos_name, pmd.algos_perf, pmd.algos_perf_sd, f"Performance | {pmd.title}", "GFLOPS", pmd.plot_dst_dir)
 
     speeduppath = Path(f"./plots/speedup")
-    if not speeduppath.exists(): speeduppat.mkdir()
+    if not speeduppath.exists(): speeduppath.mkdir()
     for list_pmd in speedup_data.values():
         speedup_plot(list_pmd)
 
